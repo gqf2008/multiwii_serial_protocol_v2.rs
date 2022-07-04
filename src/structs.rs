@@ -1,6 +1,10 @@
 //! MSP structures
 
-use prelude::v1::*;
+use packed_struct::derive::*;
+use serde_derive::{Serialize,Deserialize};
+use alloc::vec::Vec;
+use alloc::string::String;
+use alloc::borrow::ToOwned;
 
 #[derive(PackedStruct, Serialize, Deserialize, Debug, Copy, Clone)]
 pub struct MspApiVersion {
