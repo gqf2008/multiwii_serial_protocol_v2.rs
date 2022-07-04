@@ -1,5 +1,7 @@
+use core::mem::size_of;
 use crc_any::CRCu8;
-use prelude::v1::*;
+use alloc::vec::{Vec};
+use core::mem;
 
 /// Packet parsing error
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -149,7 +151,7 @@ impl MspParser {
 
             MspParserState::CommandV2 => {
                 self.packet_data.push(input);
-
+              
                 if self.packet_data.len() == 2 {
                     let mut s = [0u8; size_of::<u16>()];
                     s.copy_from_slice(&self.packet_data);
@@ -263,7 +265,7 @@ impl MspParser {
     }
 }
 
-impl Default for ::MspParser {
+impl Default for MspParser {
     fn default() -> Self {
         Self::new()
     }
@@ -327,83 +329,5 @@ impl MspPacket {
         output[l - 1] = crc.get_crc();
 
         Ok(())
-    }
-}
-
-#[test]
-fn test_serialize() {
-    let packet = MspPacket {
-        cmd: 2,
-        direction: MspPacketDirection::ToFlightController,
-        data: vec![0xbe, 0xef],
-    };
-
-    let size = packet.packet_size_bytes();
-    assert_eq!(8, size);
-
-    let mut output = vec![0; size];
-    packet.serialize(&mut output).unwrap();
-    let expected = ['$' as u8, 'M' as u8, '<' as u8, 2, 2, 0xbe, 0xef, 81];
-    assert_eq!(&expected, output.as_slice());
-
-    let crc = 2 ^ 2 ^ 0xBE ^ 0xEF;
-    assert_eq!(81, crc);
-
-    let mut packet_parsed = None;
-    let mut parser = MspParser::new();
-    for b in output {
-        let s = parser.parse(b);
-        if let Ok(Some(p)) = s {
-            packet_parsed = Some(p);
-        }
-    }
-
-    assert_eq!(packet, packet_parsed.unwrap());
-}
-
-#[test]
-fn test_roundtrip() {
-    fn roundtrip(packet: &MspPacket) {
-        let size = packet.packet_size_bytes();
-        let mut output = vec![0; size];
-
-        packet.serialize(&mut output).unwrap();
-
-        let mut parser = MspParser::new();
-        let mut packet_parsed = None;
-        for b in output {
-            let s = parser.parse(b);
-            if let Ok(Some(p)) = s {
-                packet_parsed = Some(p);
-            }
-        }
-        assert_eq!(packet, &packet_parsed.unwrap());
-    }
-
-    {
-        let packet = MspPacket {
-            cmd: 1,
-            direction: MspPacketDirection::ToFlightController,
-            data: vec![0x00, 0x00, 0x00],
-        };
-        roundtrip(&packet);
-    }
-
-    {
-        let packet = MspPacket {
-            cmd: 200,
-            direction: MspPacketDirection::FromFlightController,
-            data: vec![],
-        };
-        roundtrip(&packet);
-    }
-
-    {
-        let packet = MspPacket {
-            cmd: 100,
-            direction: MspPacketDirection::Unsupported,
-            data: vec![0x44, 0x20, 0x00, 0x80],
-        };
-        roundtrip(&packet);
     }
 }
