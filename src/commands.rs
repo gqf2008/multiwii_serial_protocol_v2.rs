@@ -1,3 +1,5 @@
+use packed_struct::derive::*;
+
 #[derive(PrimitiveEnum, Debug, Copy, Clone, PartialEq)]
 #[allow(non_camel_case_types)]
 
