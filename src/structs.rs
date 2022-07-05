@@ -1,10 +1,10 @@
 //! MSP structures
 
-use packed_struct::derive::*;
-use serde_derive::{Serialize,Deserialize};
-use alloc::vec::Vec;
-use alloc::string::String;
 use alloc::borrow::ToOwned;
+use alloc::string::String;
+use alloc::vec::Vec;
+use packed_struct::derive::*;
+use serde_derive::{Deserialize, Serialize};
 
 #[derive(PackedStruct, Serialize, Deserialize, Debug, Copy, Clone)]
 pub struct MspApiVersion {
@@ -208,11 +208,12 @@ pub struct MspBatteryConfig {
 #[derive(PackedStruct, Serialize, Deserialize, Debug, Copy, Clone)]
 #[packed_struct(endian = "lsb")]
 pub struct MspAnalog {
-    pub battery_voltage: u8,
+    pub legacy_battery_voltage: u8,
     pub mah_drawn: u16,
     pub rssi: u16,
     /// Current in 0.01A steps, range is -320A to 320A
     pub amperage: i16,
+    pub battery_voltage: u16,
 }
 
 #[derive(PackedStruct, Serialize, Deserialize, Debug, Copy, Clone)]
