@@ -49,6 +49,8 @@ pub struct MspUniqueId {
 #[packed_struct(bytes = "1", endian = "lsb", bit_numbering = "msb0")]
 pub struct MspAvailableSensors {
     #[packed_field(bits = "2")]
+    pub gyro: bool,
+    #[packed_field(bits = "3")]
     pub sonar: bool,
     #[packed_field(bits = "4")]
     pub gps: bool,

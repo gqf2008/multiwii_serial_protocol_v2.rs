@@ -281,6 +281,7 @@ impl From<u16> for Command {
             88 => Command::MSP_VTX_CONFIG,
             99 => Command::MSP_SET_ARMING_DISABLED,
             101 => Command::MSP_STATUS,
+            105 => Command::MSP_RC,
             108 => Command::MSP_ATTITUDE,
             110 => Command::MSP_ANALOG,
             150 => Command::MSP_STATUS_EX,

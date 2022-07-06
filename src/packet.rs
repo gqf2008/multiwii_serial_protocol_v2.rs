@@ -13,7 +13,7 @@ pub enum ParseError {
     InvalidHeader1,
     InvalidHeader2,
     InvalidDirection,
-    InvalidDataLength,
+    InvalidDataLength(usize),
 }
 
 /// Packet's desired destination
@@ -99,6 +99,8 @@ enum Version {
     V2,
 }
 
+const DEFAULT_MAX_PACKET_LENGTH:usize=1024;
+
 #[derive(Debug)]
 /// Parser that can find packets from a raw byte stream
 pub struct Parser {
@@ -110,11 +112,16 @@ pub struct Parser {
     packet_data: Vec<u8>,
     packet_crc: u8,
     packet_crc_v2: CRCu8,
+    max_length:usize,
 }
 
 impl Parser {
     /// Create a new parser
     pub fn new() -> Parser {
+        Self::with_max_length(DEFAULT_MAX_PACKET_LENGTH)
+    }
+
+    pub fn with_max_length(max_length:usize) -> Parser {
         Self {
             state: State::Header1,
             packet_version: Version::V1,
@@ -124,6 +131,7 @@ impl Parser {
             packet_data: Vec::new(),
             packet_crc: 0,
             packet_crc_v2: CRCu8::crc8dvb_s2(),
+            max_length:max_length,
         }
     }
 
@@ -202,6 +210,11 @@ impl Parser {
                     let mut s = [0u8; size_of::<u16>()];
                     s.copy_from_slice(&self.packet_data);
                     self.packet_data_length_remaining = u16::from_le_bytes(s).into();
+                    if self.packet_data_length_remaining > self.max_length {
+                        return Err(ParseError::InvalidDataLength(
+                            self.packet_data_length_remaining,
+                        ));
+                    }
                     self.packet_crc_v2.digest(&self.packet_data);
                     self.packet_data =
                         Vec::with_capacity(self.packet_data_length_remaining as usize);
@@ -225,6 +238,11 @@ impl Parser {
 
             State::DataLength => {
                 self.packet_data_length_remaining = input as usize;
+                if self.packet_data_length_remaining > self.max_length {
+                    return Err(ParseError::InvalidDataLength(
+                        self.packet_data_length_remaining,
+                    ));
+                }
                 self.state = State::Command;
                 self.packet_crc ^= input;
                 self.packet_data = Vec::with_capacity(input as usize);
